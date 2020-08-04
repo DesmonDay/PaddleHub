@@ -2,30 +2,27 @@ import numpy as np
 
 
 class Topic(object):
-    """Basic data structure of topic, contains topic id and
+    """Basic data structure of topic, contains topic id and 
        corresponding probability.
     """
-
     def __init__(self, tid, prob):
         self.tid = tid  # topic id
         self.prob = prob  # topic probability
 
 
 class Token(object):
-    """Basic storage unit of LDA documents, contains word id
+    """Basic storage unit of LDA documents, contains word id 
        and corresponding topic.
     """
-
     def __init__(self, topic, id):
         self.topic = topic
         self.id = id
 
 
 class Sentence(object):
-    """Basic storage unit of SentenceLDA documents, contains word ids
+    """Basic storage unit of SentenceLDA documents, contains word ids 
        of the sentence and its corresponding topic id.
     """
-
     def __init__(self, topic, tokens):
         self.topic = topic
         self.tokens = tokens
@@ -34,7 +31,6 @@ class Sentence(object):
 class LDADoc(object):
     """The storage structure of LDA model's inference result.
     """
-
     def __init__(self):
         self._num_topics = None  # Number of topics.
         self._num_accum = None  # Number of accumulated sample rounds.
@@ -66,7 +62,7 @@ class LDADoc(object):
         return self._tokens[index]
 
     def set_topic(self, index, new_topic):
-        """Set the index word's topic to new_topic, and update the corresponding
+        """Set the index word's topic to new_topic, and update the corresponding 
            topic distribution.
         """
         assert new_topic >= 0, "Topic %d out of range!" % new_topic
@@ -90,8 +86,8 @@ class LDADoc(object):
         return self._topic_sum[topic_id]
 
     def sparse_topic_dist(self, sort=True):
-        """Return the topic distribution of documents in sparse format.
-           By default, it is sorted according to the topic probability
+        """Return the topic distribution of documents in sparse format. 
+           By default, it is sorted according to the topic probability 
            under the descending order.
         """
         topic_dist = []
@@ -103,10 +99,8 @@ class LDADoc(object):
                 continue
             topic_dist.append(Topic(i, self._accum_topic_sum[i] * 1.0 / sum_))
         if sort:
-
             def take_elem(topic):
                 return topic.prob
-
             topic_dist.sort(key=take_elem, reverse=True)
             if topic_dist is None:
                 topic_dist = []
@@ -114,15 +108,14 @@ class LDADoc(object):
         return topic_dist
 
     def dense_topic_dist(self):
-        """Return the distribution of document topics in dense format,
+        """Return the distribution of document topics in dense format, 
            taking into account the prior parameter alpha.
         """
         dense_dist = np.zeros(self._num_topics)
         if self.size() == 0:
             return dense_dist
-        dense_dist = (
-            self._accum_topic_sum * 1.0 / self._num_accum + self._alpha) / (
-                self.size() + self._alpha * self._num_topics)
+        dense_dist = (self._accum_topic_sum * 1.0 / self._num_accum
+                      + self._alpha) / (self.size() + self._alpha * self._num_topics)
         return dense_dist
 
     def accumulate_topic_num(self):
@@ -134,7 +127,6 @@ class SLDADoc(LDADoc):
     """Sentence LDA Document, inherited from LDADoc.
        Add add_sentence interface.
     """
-
     def __init__(self):
         super().__init__()
         self.__sentences = None
@@ -154,15 +146,13 @@ class SLDADoc(LDADoc):
             sent: Sentence class object.
         """
         assert sent.topic >= 0, "Topic %d out of range!" % (sent.topic)
-        assert sent.topic < self._num_topics, "Topic %d out of range!" % (
-            sent.topic)
+        assert sent.topic < self._num_topics, "Topic %d out of range!" % (sent.topic)
         self.__sentences.append(sent)
         self._topic_sum[sent.topic] += 1
 
     def set_topic(self, index, new_topic):
         assert new_topic >= 0, "Topic %d out of range!" % (new_topic)
-        assert new_topic < self._num_topics, "Topic %d out of range!" % (
-            new_topic)
+        assert new_topic < self._num_topics, "Topic %d out of range!" % (new_topic)
         old_topic = self.__sentences[index].topic
         if new_topic == old_topic:
             return
@@ -177,3 +167,4 @@ class SLDADoc(LDADoc):
 
     def sent(self, index):
         return self.__sentences[index]
+

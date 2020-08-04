@@ -25,9 +25,7 @@ class Vocab(object):
         with open(vocab_file, 'r') as fin:
             for line in fin.readlines():
                 fields = line.strip().split('\t')
-                assert len(
-                    fields) == 5, "Vocabulary file [%s] format error!" % (
-                        vocab_file)
+                assert len(fields) == 5, "Vocabulary file [%s] format error!" % (vocab_file) 
                 term = fields[1]
                 id_ = int(fields[2])
                 if term in self.__term2id:
@@ -41,3 +39,4 @@ class Vocab(object):
 
     def vocabulary(self):
         return self.__id2term
+

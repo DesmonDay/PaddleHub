@@ -16,10 +16,7 @@ class SamplerType:
 
 
 class InferenceEngine(object):
-    def __init__(self,
-                 model_dir,
-                 conf_file,
-                 type=SamplerType.MetropolisHastings):
+    def __init__(self, model_dir, conf_file, type=SamplerType.MetropolisHastings):
         # Read model configuration.
         config = ModelConfig()
         conf_file_path = os.path.join(model_dir, conf_file)
@@ -92,3 +89,4 @@ class InferenceEngine(object):
 
     def get_config(self):
         return self.__config
+

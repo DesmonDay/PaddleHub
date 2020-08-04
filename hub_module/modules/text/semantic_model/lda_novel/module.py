@@ -1,4 +1,6 @@
 import os
+import pickle
+import numpy as np
 
 import paddlehub as hub
 from paddlehub.module.module import moduleinfo
@@ -15,9 +17,8 @@ from lda_novel.vocab import Vocab, WordCount
 @moduleinfo(
     name="lda_novel",
     version="1.0.0",
-    summary=
-    "This is a PaddleHub Module for LDA topic model in novel dataset, where we can calculate doc distance, calculate the similarity between query and document, etc.",
-    author="DesmonDay",
+    summary="This is a PaddleHub Module for LDA topic model in news dataset, where we can calculate doc distance, calculate the similarity between query and document, etc",
+    author="baidu",
     author_email="",
     type="nlp/semantic_model")
 class TopicModel(hub.Module):
@@ -30,30 +31,24 @@ class TopicModel(hub.Module):
         self.__engine = InferenceEngine(self.model_dir, self.conf_file)
         self.vocab_path = os.path.join(self.model_dir, 'vocab_info.txt')
         lac = hub.Module(name="lac")
-        # self.__tokenizer = SimpleTokenizer(self.vocab_path)
-        self.__tokenizer = LACTokenizer(self.vocab_path, lac)
-
-        self.vocabulary = self.__engine.get_model().get_vocab()
+        self.__tokenizer = SimpleTokenizer(self.vocab_path)
+        # self.__tokenizer = LACTokenizer(self.vocab_path, lac)
         self.config = self.__engine.get_config()
-        self.topic_words = self.__engine.get_model().topic_words()
-        self.topic_sum_table = self.__engine.get_model().topic_sum()
-
-        def take_elem(word_count):
-            return word_count.count
-
-        for i in range(self.config.num_topics):
-            self.topic_words[i].sort(key=take_elem, reverse=True)
-
+        # Load topic keywords.
+        self.keyword_path = os.path.join(self.model_dir, 'lda_novel_topicwords.pkl')
+        with open(self.keyword_path, 'rb') as f:
+            self.keywords = pickle.load(f)
+            
         logger.info("Finish initialization.")
 
     def cal_doc_distance(self, doc_text1, doc_text2):
         """
         This interface calculates the distance between documents.
-
+        
         Args:
             doc_text1(str): the input document text 1.
             doc_text2(str): the input document text 2.
-
+        
         Returns:
             jsd(float): Jensen-Shannon Divergence distance of two documents.
             hd(float): Hellinger Distance of two documents.
@@ -79,14 +74,14 @@ class TopicModel(hub.Module):
 
     def cal_doc_keywords_similarity(self, document, top_k=10):
         """
-        This interface can be used to find topk keywords of document.
-
+        This interface can be used to find top k keywords of document.
+        
         Args:
             document(str): the input document text.
             top_k(int): top k keywords of this document.
 
         Returns:
-            results(list): contains top_k keywords and their corresponding
+            results(list): contains top_k keywords and their corresponding 
                            similarity compared to document.
         """
         d_tokens = self.__tokenizer.tokenize(document)
@@ -105,10 +100,9 @@ class TopicModel(hub.Module):
             wd = WordAndDis()
             wd.word = word
             sm = SemanticMatching()
-            wd.distance = sm.likelihood_based_similarity(
-                terms=[word],
-                doc_topic_dist=doc_topic_dist,
-                model=self.__engine.get_model())
+            wd.distance = sm.likelihood_based_similarity(terms=[word],
+                                                         doc_topic_dist=doc_topic_dist,
+                                                         model=self.__engine.get_model())
             items.append(wd)
 
         def take_elem(word_dis):
@@ -121,17 +115,14 @@ class TopicModel(hub.Module):
         for i in range(top_k):
             if i >= size:
                 break
-            results.append({
-                "word": items[i].word,
-                "similarity": items[i].distance
-            })
+            results.append({"word": items[i].word, "similarity": items[i].distance})
 
         return results
 
     def cal_query_doc_similarity(self, query, document):
         """
         This interface calculates the similarity between query and document.
-
+        
         Args:
             query(str): the input query text.
             document(str): the input document text.
@@ -142,13 +133,15 @@ class TopicModel(hub.Module):
         """
         q_tokens = self.__tokenizer.tokenize(query)
         d_tokens = self.__tokenizer.tokenize(document)
-
+        print(q_tokens, d_tokens)
         doc = LDADoc()
         self.__engine.infer(d_tokens, doc)
         doc_topic_dist = doc.sparse_topic_dist()
-
+        for topic in doc_topic_dist:
+            print(topic.tid, topic.prob)
         sm = SemanticMatching()
-        lda_sim = sm.likelihood_based_similarity(q_tokens, doc_topic_dist,
+        lda_sim = sm.likelihood_based_similarity(q_tokens,
+                                                 doc_topic_dist,
                                                  self.__engine.get_model())
 
         return lda_sim
@@ -156,11 +149,11 @@ class TopicModel(hub.Module):
     def infer_doc_topic_distribution(self, document):
         """
         This interface infers the topic distribution of document.
-
+        
         Args:
             document(str): the input document text.
 
-        Returns:
+        Returns: 
             results(list): returns the topic distribution of document.
         """
         tokens = self.__tokenizer.tokenize(document)
@@ -176,25 +169,18 @@ class TopicModel(hub.Module):
 
     def show_topic_keywords(self, topic_id, k=10):
         """
-        This interface returns the k keywords under specific topic.
-
+        This interface returns first k keywords under specific topic.
+        
         Args:
             topic_id(int): topic information we want to know.
-            k(int): top k keywords.
+            k(int): top k keywords, k should be 0 < k <= 20.
 
         Returns:
-            results(dict): contains specific topic's keywords and corresponding
+            results(list): contains specific topic's keywords and corresponding 
                            probability.
         """
         EPS = 1e-8
-        results = {}
         if 0 <= topic_id < self.config.num_topics:
-            k = min(k, len(self.topic_words[topic_id]))
-            for i in range(k):
-                prob = self.topic_words[topic_id][i].count / \
-                       (self.topic_sum_table[topic_id] + EPS)
-                results[self.vocabulary[self.topic_words[topic_id]
-                                        [i].word_id]] = prob
-            return results
+            return list(self.keywords[topic_id])[:k]
         else:
             logger.error("%d is out of range!" % topic_id)

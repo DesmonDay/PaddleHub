@@ -1,13 +1,12 @@
 import os
-
 import numpy as np
+
 from paddlehub.common.logger import logger
 
 
 class Tokenizer(object):
     """Base tokenizer class.
     """
-
     def __init__(self):
         pass
 
@@ -16,12 +15,11 @@ class Tokenizer(object):
 
 
 class SimpleTokenizer(Tokenizer):
-    """Simple version FMM(Forward Maximun Matching) word tokenizer. This tokenizer can only
+    """Simple version FMM(Forward Maximun Matching) word tokenizer. This tokenizer can only 
        be used in topic model demo, but not in real business application scenarios.
 
        Notes: This tokenizer can only recognize the words in the corresponding vocab file.
     """
-
     def __init__(self, vocab_path):
         super().__init__()
         self.__max_word_len = 0
@@ -82,7 +80,7 @@ class SimpleTokenizer(Tokenizer):
         return (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')
 
     def __tolower(self, c):
-        """Return the lowercase character of the corresponding character, or return
+        """Return the lowercase character of the corresponding character, or return 
            the original character if there is no corresponding lowercase character.
         """
         return c.lower()
@@ -110,8 +108,10 @@ class LACTokenizer(Tokenizer):
                 vocab_size += 1
 
     def tokenize(self, text):
-        results = self.__lac.lexical_analysis(
-            texts=[text], use_gpu=False, batch_size=1, return_tag=True)
+        results = self.__lac.lexical_analysis(texts=[text],
+                                              use_gpu=False,
+                                              batch_size=1,
+                                              return_tag=True)
         # Change English words to lower case.
         # And just preserve the word in vocab.
         words = results[0]["word"]
@@ -126,3 +126,4 @@ class LACTokenizer(Tokenizer):
         """Check whether the word is in the vocabulary.
         """
         return word in self.__vocab
+

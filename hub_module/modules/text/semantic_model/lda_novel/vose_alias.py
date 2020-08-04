@@ -1,6 +1,6 @@
 import os
-
 import numpy as np
+
 from paddlehub.common.logger import logger
 
 from lda_novel.util import rand, rand_k
@@ -9,21 +9,20 @@ from lda_novel.util import rand, rand_k
 class VoseAlias(object):
     """Vose's Alias Method.
     """
-
     def __init__(self):
         self.__alias = None
-        self.__prob = None  # np.array
+        self.__prob = None # np.array
 
     def initialize(self, distribution):
         """Initialize the alias table according to the input distribution
         Arg:
-            distribution: Numpy array.
+            distribution: the input distribution. 
         """
         size = distribution.shape[0]
         self.__alias = np.zeros(size, dtype=np.int64)
         self.__prob = np.zeros(size)
         sum_ = np.sum(distribution)
-        p = distribution / sum_ * size  # Scale up probability.
+        p = distribution / sum_ * size  # Scale up probability. 
         large, small = [], []
         for i, p_ in enumerate(p):
             if p_ < 1.0:
@@ -63,3 +62,5 @@ class VoseAlias(object):
 
     def size(self):
         return self.__prob.shape[0]
+
+

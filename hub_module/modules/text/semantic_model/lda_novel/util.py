@@ -1,7 +1,7 @@
 import time
+import numpy as np
 import yaml
 
-import numpy as np
 from paddlehub.common.logger import logger
 
 from lda_novel.config import ModelType
@@ -36,7 +36,6 @@ def fix_random_seed(seed=2147483647):
 def rand(min_=0, max_=1):
     return np.random.uniform(low=min_, high=max_)
 
-
 def rand_k(k):
     """Returns an integer float number between [0, k - 1].
     """
@@ -46,12 +45,12 @@ def rand_k(k):
 def timeit(f):
     """Return time cost of function f.
     """
-
     def timed(*args, **kwargs):
         start_time = time.time()
         result = f(*args, **kwargs)
         end_time = time.time()
         print("   [-] %s : %2.5f sec" % (f.__name__, end_time - start_time))
         return result
-
     return timed
+
+

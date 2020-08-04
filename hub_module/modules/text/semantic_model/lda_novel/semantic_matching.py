@@ -1,6 +1,6 @@
 import os
-
 import numpy as np
+
 from paddlehub.common.logger import logger
 
 from lda_novel.vocab import OOV
@@ -21,17 +21,19 @@ class SemanticMatching(object):
     def l2_norm(self, vec):
         """Calculate the length of vector.
         """
-        result = np.sqrt(np.sum(vec**2))
+        result = np.sqrt(np.sum(vec ** 2))
         return result
 
     def cosine_similarity(self, vec1, vec2):
+        """Calculate the cosine similarity between two vectors.
+        """
         norm1 = self.l2_norm(vec1)
         norm2 = self.l2_norm(vec2)
         result = np.sum(vec1 * vec2) / norm1 / norm2
         return result
 
     def likelihood_based_similarity(self, terms, doc_topic_dist, model):
-        """
+        """Calculate the likelihood based similarity.
         Args:
             terms: list of strings
             doc_topic_dist: list of Topic class
@@ -71,6 +73,7 @@ class SemanticMatching(object):
 
     def hellinger_distance(self, dist1, dist2):
         assert dist1.shape == dist2.shape
-        result = np.sum((np.sqrt(dist1) - np.sqrt(dist2))**2)
+        result = np.sum((np.sqrt(dist1) - np.sqrt(dist2)) ** 2)
         result = np.sqrt(result) * 0.7071067812
         return result
+

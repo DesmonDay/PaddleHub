@@ -1,7 +1,7 @@
 import os
-
 import numpy as np
 from tqdm import tqdm
+
 from paddlehub.common.logger import logger
 
 from lda_novel.document import LDADoc, SLDADoc, Token, Sentence
@@ -59,8 +59,7 @@ class MHSampler(Sampler):
                 self.__alias_tables[i].initialize(dist)
 
         # Build prior parameter beta's alias table.
-        beta_dist = self.__model.beta() / (
-            self.__model.topic_sum() + self.__model.beta_sum())
+        beta_dist = self.__model.beta() / (self.__model.topic_sum() + self.__model.beta_sum())
         self.__beta_prior_sum = np.sum(beta_dist)
         self.__beta_alias.initialize(beta_dist)
 
@@ -101,12 +100,9 @@ class MHSampler(Sampler):
             if new_topic != old_topic:
                 proposal_old = self.__doc_proposal_distribution(doc, old_topic)
                 proposal_new = self.__doc_proposal_distribution(doc, new_topic)
-                proportion_old = self.__proportional_function(
-                    doc, token, old_topic)
-                proportion_new = self.__proportional_function(
-                    doc, token, new_topic)
-                transition_prob = float((proportion_new * proposal_old) /
-                                        (proportion_old * proposal_new))
+                proportion_old = self.__proportional_function(doc, token, old_topic)
+                proportion_new = self.__proportional_function(doc, token, new_topic)
+                transition_prob = float((proportion_new * proposal_old) / (proportion_old * proposal_new))
                 rejection = rand()
                 mask = -(rejection < transition_prob)
                 return (new_topic & mask) | (old_topic & ~mask)
@@ -124,14 +120,11 @@ class MHSampler(Sampler):
                 new_topic = rand_k(self.__model.num_topics())
 
             if new_topic != old_topic:
-                proportion_old = self.__proportional_function(
-                    doc, sent, old_topic)
-                proportion_new = self.__proportional_function(
-                    doc, sent, new_topic)
+                proportion_old = self.__proportional_function(doc, sent, old_topic)
+                proportion_new = self.__proportional_function(doc, sent, new_topic)
                 proposal_old = self.__doc_proposal_distribution(doc, old_topic)
                 proposal_new = self.__doc_proposal_distribution(doc, new_topic)
-                transition_prob = float((proportion_new * proposal_old) /
-                                        (proportion_old * proposal_new))
+                transition_prob = float((proportion_new * proposal_old) / (proportion_old * proposal_new))
                 rejection = rand()
                 mask = -(rejection < transition_prob)
                 return (new_topic & mask) | (old_topic & ~mask)
@@ -142,18 +135,13 @@ class MHSampler(Sampler):
         if isinstance(doc, LDADoc) and isinstance(token, Token):
             new_topic = self.__propose(token.id)
             if new_topic != old_topic:
-                proposal_old = self.__word_proposal_distribution(
-                    token.id, old_topic)
-                proposal_new = self.__word_proposal_distribution(
-                    token.id, new_topic)
-                proportion_old = self.__proportional_function(
-                    doc, token, old_topic)
-                proportion_new = self.__proportional_function(
-                    doc, token, new_topic)
-                transition_prob = float((proportion_new * proposal_old) /
-                                        (proportion_old * proposal_new))
+                proposal_old = self.__word_proposal_distribution(token.id, old_topic)
+                proposal_new = self.__word_proposal_distribution(token.id, new_topic)
+                proportion_old = self.__proportional_function(doc, token, old_topic)
+                proportion_new = self.__proportional_function(doc, token, new_topic)
+                transition_prob = float((proportion_new * proposal_old) / (proportion_old * proposal_new))
                 rejection = rand()
-                mask = -(rejection < transition_prob)
+                mask = - (rejection < transition_prob)
                 return (new_topic & mask) | (old_topic & ~mask)
             return new_topic
 
@@ -163,18 +151,13 @@ class MHSampler(Sampler):
             for word_id in sent.tokens:
                 new_topic = self.__propose(word_id)
                 if new_topic != old_topic:
-                    proportion_old = self.__proportional_function(
-                        doc, sent, old_topic)
-                    proportion_new = self.__proportional_function(
-                        doc, sent, new_topic)
-                    proposal_old = self.__word_proposal_distribution(
-                        word_id, old_topic)
-                    proposal_new = self.__word_proposal_distribution(
-                        word_id, new_topic)
-                    transition_prob = float((proportion_new * proposal_old) /
-                                            (proportion_old * proposal_new))
+                    proportion_old = self.__proportional_function(doc, sent, old_topic)
+                    proportion_new = self.__proportional_function(doc, sent, new_topic)
+                    proposal_old = self.__word_proposal_distribution(word_id, old_topic)
+                    proposal_new = self.__word_proposal_distribution(word_id, new_topic)
+                    transition_prob = float((proportion_new * proposal_old) / (proportion_old * proposal_new))
                     rejection = rand()
-                    mask = -(rejection < transition_prob)
+                    mask = - (rejection < transition_prob)
                     new_topic = (new_topic & mask) | (old_topic & ~mask)
             return new_topic
 
@@ -182,10 +165,8 @@ class MHSampler(Sampler):
         if isinstance(doc, LDADoc) and isinstance(token, Token):
             old_topic = token.topic
             dt_alpha = doc.topic_sum(new_topic) + self.__model.alpha()
-            wt_beta = self.__model.word_topic_value(
-                token.id, new_topic) + self.__model.beta()
-            t_sum_beta_sum = self.__model.topic_sum_value(
-                new_topic) + self.__model.beta_sum()
+            wt_beta = self.__model.word_topic_value(token.id, new_topic) + self.__model.beta()
+            t_sum_beta_sum = self.__model.topic_sum_value(new_topic) + self.__model.beta_sum()
             if new_topic == old_topic and wt_beta > 1:
                 if dt_alpha > 1:
                     dt_alpha -= 1
@@ -200,10 +181,8 @@ class MHSampler(Sampler):
             if new_topic == old_topic:
                 result -= 1
             for word_id in sent.tokens:
-                wt_beta = self.__model.word_topic_value(
-                    word_id, new_topic) + self.__model.beta()
-                t_sum_beta_sum = self.__model.topic_sum_value(
-                    new_topic) + self.__model.beta_sum()
+                wt_beta = self.__model.word_topic_value(word_id, new_topic) + self.__model.beta()
+                t_sum_beta_sum = self.__model.topic_sum_value(new_topic) + self.__model.beta_sum()
                 if new_topic == old_topic and wt_beta > 1:
                     wt_beta -= 1
                     t_sum_beta_sum -= 1
@@ -213,10 +192,8 @@ class MHSampler(Sampler):
             logger.error("Wrong input argument type!")
 
     def __word_proposal_distribution(self, word_id, topic):
-        wt_beta = self.__model.word_topic_value(word_id,
-                                                topic) + self.__model.beta()
-        t_sum_beta_sum = self.__model.topic_sum_value(
-            topic) + self.__model.beta_sum()
+        wt_beta = self.__model.word_topic_value(word_id, topic) + self.__model.beta()
+        t_sum_beta_sum = self.__model.topic_sum_value(topic) + self.__model.beta_sum()
         return wt_beta / t_sum_beta_sum
 
     def __doc_proposal_distribution(self, doc, topic):
@@ -255,8 +232,7 @@ class GibbsSampler(Sampler):
         sum_ = 0
         for i in range(num_topics):
             dt_alpha = doc.topic_sum(i) + self.__model.alpha()
-            wt_beta = self.__model.word_topic_value(token.id,
-                                                    i) + self.__model.beta()
+            wt_beta = self.__model.word_topic_value(token.id, i) + self.__model.beta()
             t_sum_beta_sum = self.__model.topic_sum(i) + self.__model.beta_sum()
             if i == old_topic and wt_beta > 1:
                 if dt_alpha > 1:
@@ -266,7 +242,7 @@ class GibbsSampler(Sampler):
             prob[i] = dt_alpha * wt_beta / t_sum_beta_sum
             sum_ += prob[i]
             accum_prob[i] = prob[i] if i == 0 else accum_prob[i - 1] + prob[i]
-
+            
         dart = rand() * sum_
         if dart <= accum_prob[0]:
             return 0
@@ -274,7 +250,7 @@ class GibbsSampler(Sampler):
             if accum_prob[i - 1] < dart <= accum_prob[i]:
                 return i
         return num_topics - 1
-
+            
     def __sample_sentence(self, doc, sent):
         old_topic = sent.topic
         num_topics = self.__model.num_topics()
@@ -292,8 +268,7 @@ class GibbsSampler(Sampler):
             prob[t] = dt_alpha
             for i in range(len(sent.tokens)):
                 w = sent.tokens[i]
-                wt_beta = self.__model.word_topic_value(
-                    w, t) + self.__model.beta()
+                wt_beta = self.__model.word_topic_value(w, t) + self.__model.beta()
                 if t == old_topic and wt_beta > 1:
                     wt_beta -= 1
                 # Note: if the length of the sentence is too long, the probability will be
@@ -309,3 +284,4 @@ class GibbsSampler(Sampler):
             if accum_prob[t - 1] < dart <= accum_prob[t]:
                 return t
         return num_topics - 1
+

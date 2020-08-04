@@ -1,8 +1,8 @@
 import os
-from collections import OrderedDict
-
 import numpy as np
 from tqdm import tqdm
+from collections import OrderedDict
+
 from paddlehub.common.logger import logger
 
 from lda_novel.vocab import Vocab, WordCount
@@ -11,24 +11,21 @@ from lda_novel.vocab import Vocab, WordCount
 class TopicModel(object):
     """Storage Structure of Topic model, including vocabulary and word topic count.
     """
-
     def __init__(self, model_dir, config):
         """
         Args:
             model_dir: the path of model directory
             config: ModelConfig class.
         """
-        self.__word_topic = None  # Model parameter of word topic.
-        self.__vocab = Vocab()  # Vocab data structure of model.
+        self.__word_topic = None # Model parameter of word topic.
+        self.__vocab = Vocab()      # Vocab data structure of model.
         self.__num_topics = config.num_topics  # Number of topics.
         self.__alpha = config.alpha
         self.__alpha_sum = self.__alpha * self.__num_topics
         self.__beta = config.beta
         self.__beta_sum = None
-        self.__type = config.type  # Model type.
-        self.__topic_sum = np.zeros(
-            self.__num_topics,
-            dtype="int64")  # Accum sum of each topic in word topic.
+        self.__type = config.type       # Model type.
+        self.__topic_sum = np.zeros(self.__num_topics, dtype="int64")  # Accum sum of each topic in word topic.
         self.__topic_words = [[] for _ in range(self.__num_topics)]
         word_topic_path = os.path.join(model_dir, config.word_topic_file)
         vocab_path = os.path.join(model_dir, config.vocab_file)
@@ -45,9 +42,8 @@ class TopicModel(object):
         self.__beta_sum = self.__beta * self.__vocab.size()
         self.__word_topic = [{} for _ in range(self.__vocab.size())]  # 字典列表
         self.__load_word_dict(word_topic_path)
-        logger.info(
-            "Model Info: #num_topics=%d #vocab_size=%d alpha=%f beta=%f" %
-            (self.num_topics(), self.vocab_size(), self.alpha(), self.beta()))
+        logger.info("Model Info: #num_topics=%d #vocab_size=%d alpha=%f beta=%f" %
+                 (self.num_topics(), self.vocab_size(), self.alpha(), self.beta()))
 
     def word_topic_value(self, word_id, topic_id):
         """Return value of specific word under specific topic in the model.
@@ -113,8 +109,7 @@ class TopicModel(object):
 
                     self.__word_topic[term_id][topic_id] = count
                     self.__topic_sum[topic_id] += count
-                    self.__topic_words[topic_id].append(
-                        WordCount(term_id, count))
+                    self.__topic_words[topic_id].append(WordCount(term_id, count))
                 new_dict = OrderedDict()
                 for key in sorted(self.__word_topic[term_id]):
                     new_dict[key] = self.__word_topic[term_id][key]
